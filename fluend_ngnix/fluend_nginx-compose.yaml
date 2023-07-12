@@ -1,0 +1,35 @@
+version: "3.3"
+services:
+
+  fluentd:
+    image: melvindave/fluentd-elastic:1.0
+    restart: always
+    ports:
+      - "24224:24224"
+    networks:
+      - logging-net
+    depends_on:  
+      - "elasticsearch"
+    volumes:
+      - ./fluentd/etc:/fluentd/etc
+  
+  nginx:
+    image: nginx
+    restart: always
+    ports:
+      - "80:80"
+    networks:
+      - logging-net
+    deploy:
+      replicas: 1  
+    volumes:
+      - ${NGINX_HTML_DIR}:/usr/share/nginx/html
+    logging:
+      driver: fluentd  
+      options:
+        fluentd-address: localhost:24224
+        tag: httpd.access
+    depends_on:  
+      - "fluentd" 
+networks:
+  logging-net:
